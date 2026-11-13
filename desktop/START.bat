@@ -26,11 +26,11 @@ exit /b 0
 
 :missing_python
 echo.
-echo SETTINGSCS2 - Python 3.10 or newer was not found.
+echo PerfSettings - Python 3.10 or newer was not found.
 echo Install Python from https://www.python.org/downloads/windows/
 echo Enable Add Python to PATH and include Tcl/Tk and IDLE.
 echo Close this window and run START.bat again.
-echo For a standalone app, download SettingsCS2-Setup.exe from GitHub Releases.
+echo For a standalone app, download PerfSettings-Setup.exe from GitHub Releases.
 pause
 exit /b 1
 

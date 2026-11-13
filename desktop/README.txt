@@ -1,7 +1,7 @@
-SETTINGSCS2 DESKTOP v0.6.0
+PerfSettings DESKTOP v0.7.0
 
 INSTALL
-Download SettingsCS2-Setup.exe from the repository's latest GitHub Release.
+Download PerfSettings-Setup.exe from the repository's latest GitHub Release.
 The installer includes Python; no separate Python installation is required.
 For the source edition only, install Python 3.10+ with Tcl/Tk, then run START.bat.
 
@@ -40,3 +40,11 @@ VALIDATION
 Automated checks cover config validation, backups, launch arguments, update
 integrity and window behavior. Actual Windows integration and CS2 execution
 must be checked on a Windows PC.
+
+FIRST-RUN GAME SELECTION (v0.7)
+Choose CS2, FiveM or both on the welcome screen. Preferences are stored locally.
+FiveM is coming soon: selecting it does not enable config installation for it.
+Change games reopens the selection screen. CS2 configs remain saved when hidden.
+Glass-inspired panels use opaque shading for legibility, not native backdrop blur.
+Legacy data paths, executable identity and config filenames remain stable to
+preserve existing installations, taskbar pins and saved data.

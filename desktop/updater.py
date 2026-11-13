@@ -8,7 +8,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-ASSET = 'SettingsCS2-Setup.exe'
+ASSET = 'PerfSettings-Setup.exe'
+LEGACY_ASSET = 'SettingsCS2-Setup.exe'
 LIMIT = 200 * 1024 * 1024
 
 
@@ -26,7 +27,7 @@ def repository(value):
 
 
 def request(url):
-    return urllib.request.Request(url, headers={'User-Agent':'SettingsCS2-Updater','Accept':'application/vnd.github+json'})
+    return urllib.request.Request(url, headers={'User-Agent':'PerfSettings-Updater','Accept':'application/vnd.github+json'})
 
 
 def latest(repo, current):
@@ -48,6 +49,8 @@ def parse_release(data,repo,current):
     tag=data.get('tag_name','')
     if version_tuple(tag)<=version_tuple(current):return None
     candidates=[a for a in data.get('assets',[]) if a.get('name')==ASSET and a.get('state')=='uploaded']
+    if not candidates:
+        candidates=[a for a in data.get('assets',[]) if a.get('name')==LEGACY_ASSET and a.get('state')=='uploaded']
     if len(candidates)!=1:raise ValueError('This release has no complete installer. Check Actions.')
     asset=candidates[0];digest=asset.get('digest','')
     if not isinstance(digest,str) or not re.fullmatch(r'sha256:[a-fA-F0-9]{64}',digest):
@@ -55,7 +58,7 @@ def parse_release(data,repo,current):
     size=asset.get('size')
     if not isinstance(size,int) or not 0<size<=LIMIT:raise ValueError('Invalid installer size.')
     url=asset.get('browser_download_url','')
-    expected=f'https://github.com/{repo}/releases/download/{tag}/{ASSET}'
+    expected=f'https://github.com/{repo}/releases/download/{tag}/{asset["name"]}'
     if url!=expected:raise ValueError('Installer URL does not match the selected repository.')
     return dict(version=tag.lstrip('v'),url=url,sha256=digest[7:].lower(),size=size,repo=repo)
 

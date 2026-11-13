@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'New version, for example v0.6.0'
+        description: 'New version, for example v0.7.0'
         required: true
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
           import os,re
           from pathlib import Path
           tag=os.environ['RELEASE_TAG']
-          assert re.fullmatch(r'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)',tag), 'Use a tag such as v0.6.0'
+          assert re.fullmatch(r'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)',tag), 'Use a tag such as v0.7.0'
           Path('desktop/release_config.py').write_text('VERSION = '+repr(tag[1:])+'\nREPOSITORY = '+repr(os.environ['RELEASE_REPO'])+'\nSITE_URL = '+repr('https://'+os.environ['RELEASE_REPO'].split('/')[0].lower()+'.github.io/'+os.environ['RELEASE_REPO'].split('/')[1]+'/')+'\n',encoding='utf-8')
       - name: Test
         run: python -m unittest discover -s desktop -v
@@ -50,7 +50,11 @@ jobs:
           if (!(Test-Path $compiler)) { throw 'Inno Setup 6 is missing on this runner.' }
           & $compiler "/DAppVersion=$($env:RELEASE_TAG.Substring(1))" packaging/settingscs2.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
-          (Get-FileHash release/SettingsCS2-Setup.exe -Algorithm SHA256).Hash.ToLower() + '  SettingsCS2-Setup.exe' | Set-Content release/SHA256SUMS.txt
+          # Keep a compatibility asset so older installed updaters can upgrade.
+          Copy-Item release/PerfSettings-Setup.exe release/SettingsCS2-Setup.exe
+          @('PerfSettings-Setup.exe', 'SettingsCS2-Setup.exe') | ForEach-Object {
+            (Get-FileHash "release/$_" -Algorithm SHA256).Hash.ToLower() + "  $_"
+          } | Set-Content release/SHA256SUMS.txt
       - name: Upload installer before publishing
         shell: pwsh
         env:
@@ -63,10 +67,11 @@ jobs:
             $draft = gh release view $env:RELEASE_TAG --json isDraft --jq '.isDraft'
             if ($draft -ne 'true') { throw 'This version is already public. Create a new version tag.' }
           } else {
-            gh release create $env:RELEASE_TAG --target $env:GITHUB_SHA --draft --title "SETTINGSCS2 $env:RELEASE_TAG" --generate-notes
+            gh release create $env:RELEASE_TAG --target $env:GITHUB_SHA --draft --title "PerfSettings $env:RELEASE_TAG" --generate-notes
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed.' }
           }
-          gh release upload $env:RELEASE_TAG release/SettingsCS2-Setup.exe release/SHA256SUMS.txt --clobber
+          gh release upload $env:RELEASE_TAG release/PerfSettings-Setup.exe release/SettingsCS2-Setup.exe release/SHA256SUMS.txt --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed.' }
           gh release edit $env:RELEASE_TAG --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw 'Publication failed.' }
+

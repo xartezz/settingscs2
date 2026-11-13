@@ -6,7 +6,7 @@ PLAYERS = [
 ]
 
 def preset(player):
-    return (f'// SETTINGSCS2 — {player["name"]}: partial preset, not the original config\n'
+    return (f'// PerfSettings — {player["name"]}: partial preset, not the original config\n'
             f'// Source: https://prosettings.net/players/{"m0nesy" if player["id"]=="monesy" else player["id"]}/\n'
             f'// Snapshot 2026-11-12. DPI {player["dpi"]} and resolution must be set manually.\n'
             f'sensitivity "{player["sens"]}"\nzoom_sensitivity_ratio "1"\n'

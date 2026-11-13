@@ -36,6 +36,18 @@ class Updates(unittest.TestCase):
             with patch('updater.urllib.request.build_opener',return_value=opener):
                 with self.assertRaises(ValueError):download(bad,directory)
             self.assertEqual(len(list(Path(directory).rglob('*.exe'))),1)
+    def test_rebrand_prefers_new_asset_and_accepts_legacy(self):
+        data=copy.deepcopy(DATA)
+        legacy=copy.deepcopy(data['assets'][0])
+        legacy['name']='SettingsCS2-Setup.exe'
+        legacy['browser_download_url']=legacy['browser_download_url'].replace(ASSET,legacy['name'])
+        data['assets'].append(legacy)
+        self.assertTrue(parse_release(data,REPO,'0.5.0')['url'].endswith(ASSET))
+        data['assets']=[legacy]
+        self.assertTrue(parse_release(data,REPO,'0.5.0')['url'].endswith('SettingsCS2-Setup.exe'))
+        legacy['browser_download_url']='https://evil.example/SettingsCS2-Setup.exe'
+        with self.assertRaises(ValueError):parse_release(data,REPO,'0.5.0')
     def test_block_redirect(self):
         with self.assertRaises(ValueError):HTTPSRedirect().redirect_request(None,None,302,'',{},'http://evil.example/file')
 if __name__=='__main__':unittest.main()
+

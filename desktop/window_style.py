@@ -4,6 +4,7 @@ import sys
 import tkinter as tk
 from ctypes import wintypes
 from release_config import VERSION
+from glass import rounded_points
 
 
 APP_USER_MODEL_ID = 'SettingsCS2.Desktop'
@@ -79,8 +80,8 @@ class WindowChrome:
         brand=tk.Frame(self.bar,bg='#141416');brand.pack(side='left',padx=20)
         icon=tk.Label(brand,text='⌖',bg='#141416',fg='#ef4148',font=('Segoe UI',24,'bold'));icon.pack(side='left',padx=(0,10))
         text=tk.Frame(brand,bg='#141416');text.pack(side='left')
-        name=tk.Label(text,text='SETTINGSCS2',bg='#141416',fg='#f3f3f1',font=('Segoe UI',10,'bold'),anchor='w');name.pack(anchor='w')
-        version=tk.Label(text,text='DESKTOP  /  v'+VERSION,bg='#141416',fg='#7f828b',font=('Segoe UI',8),anchor='w');version.pack(anchor='w')
+        name=tk.Label(text,text='PerfSettings',bg='#141416',fg='#f3f3f1',font=('Segoe UI',10,'bold'),anchor='w');name.pack(anchor='w')
+        version=tk.Label(text,text='PERFORMANCE HUB  /  v'+VERSION,bg='#141416',fg='#7f828b',font=('Segoe UI',8),anchor='w');version.pack(anchor='w')
         badge=tk.Label(self.bar,text='  CS2  ',bg='#302023',fg='#ef777c',font=('Segoe UI',8,'bold'),pady=4);badge.pack(side='left',padx=14)
         controls=tk.Frame(self.bar,bg='#141416');controls.pack(side='right',padx=12)
         self.control(controls,'close',self.close,'Close')
@@ -100,9 +101,13 @@ class WindowChrome:
     def control(self,parent,kind,command,description):
         c=tk.Canvas(parent,width=34,height=30,bg='#141416',highlightthickness=0,cursor='hand2',takefocus=1)
         c.pack(side='right',padx=3)
-        def draw(active=False):
-            c.delete('all');bg=('#ba343c' if kind=='close' else '#38383f') if active else '#242428'
-            c.create_polygon(6,0,28,0,34,0,34,6,34,24,34,30,28,30,6,30,0,30,0,24,0,6,0,0,smooth=True,fill=bg)
+        c.amount=0.;c.job=None;c.target=0.
+        def draw(active=None):
+            c.delete('all');target='#ba343c' if kind=='close' else '#454654'
+            base='#24242c'
+            bg='#'+''.join(f'{round(int(base[i:i+2],16)+(int(target[i:i+2],16)-int(base[i:i+2],16))*c.amount):02x}' for i in (1,3,5))
+            active=c.amount>.5
+            c.create_polygon(*rounded_points(0,0,34,30,8),fill=bg,outline='#3c3e48')
             fg='#ffffff' if active else '#b8b9c1'
             if kind=='close':
                 c.create_line(12,10,22,20,fill=fg,width=1.4);c.create_line(22,10,12,20,fill=fg,width=1.4)
@@ -110,8 +115,21 @@ class WindowChrome:
             else:
                 if self.maximized:c.create_rectangle(14,9,24,19,outline=fg)
                 c.create_rectangle(11,12 if self.maximized else 10,21 if self.maximized else 23,22 if self.maximized else 21,outline=fg,fill=bg)
-        c.bind('<Enter>',lambda e:draw(True));c.bind('<Leave>',lambda e:draw())
-        c.bind('<FocusIn>',lambda e:draw(True));c.bind('<FocusOut>',lambda e:draw())
+        def frame():
+            c.job=None
+            c.amount=c.target if getattr(self.root,'reduce_motion',False) else c.amount+(c.target-c.amount)*.4
+            if abs(c.target-c.amount)<.02:c.amount=c.target
+            draw()
+            if c.amount!=c.target:c.job=c.after(16,frame)
+        def hover(value):
+            c.target=float(value)
+            if c.job:c.after_cancel(c.job);c.job=None
+            frame()
+        def dispose(event):
+            if event.widget==c and c.job:c.after_cancel(c.job);c.job=None
+        c.bind('<Destroy>',dispose)
+        c.bind('<Enter>',lambda e:hover(True));c.bind('<Leave>',lambda e:hover(False))
+        c.bind('<FocusIn>',lambda e:hover(True));c.bind('<FocusOut>',lambda e:hover(False))
         c.bind('<Button-1>',lambda e:command());c.bind('<Return>',lambda e:command());c.bind('<space>',lambda e:command())
         c.redraw=draw;draw();return c
     def api(self):

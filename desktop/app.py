@@ -1,4 +1,4 @@
-"""SETTINGSCS2 Desktop 0.6 — themed native UI, standard library only."""
+"""PerfSettings Desktop 0.6 — themed native UI, standard library only."""
 import json
 import queue
 import threading
@@ -13,6 +13,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from core import validate_cfg, decode_link, install_cfg, launch_args, game_cfg_dir
 from catalog import PLAYERS, preset
+from preferences import parse_games
+from glass import GlassPanel, rounded_points
 from window_style import WindowChrome, set_app_identity
 from release_config import VERSION, REPOSITORY, SITE_URL
 import updater
@@ -25,7 +27,7 @@ DB.execute('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEX
 DB.execute('CREATE TABLE IF NOT EXISTS community (id TEXT PRIMARY KEY, name TEXT NOT NULL, content TEXT NOT NULL, metadata TEXT NOT NULL)')
 DB.commit()
 SITE = SITE_URL
-BG, PANEL, FIELD, LINE = '#0b0c0e', '#141518', '#1c1d22', '#292b31'
+BG, PANEL, FIELD, LINE = '#0c0d12', '#181a20', '#20232c', '#343744'
 WHITE, MUTED, RED, GREEN = '#f3f3f1', '#96989f', '#ef4148', '#88c4a2'
 FONT = 'Segoe UI'
 DISPLAY = 'Bahnschrift SemiCondensed'
@@ -50,7 +52,7 @@ def add_config(name, content):
 def register_protocol():
     import winreg
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Classes\settingscs2') as key:
-        winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'URL:SettingsCS2')
+        winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'URL:PerfSettings')
         winreg.SetValueEx(key, 'URL Protocol', 0, winreg.REG_SZ, '')
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Classes\settingscs2\shell\open\command') as key:
         command = f'"{sys.executable}" "%1"' if getattr(sys, "frozen", False) else f'"{sys.executable}" "{Path(__file__).resolve()}" "%1"'
@@ -112,19 +114,24 @@ class Button(tk.Canvas):
         base=RED if self.primary else (self.cget('bg') if self.quiet else '#1c1e24')
         fill=mix_color(base,'#ff666a' if self.primary else '#323641',self.amount)
         outline='#ff787d' if self.primary else mix_color('#30333d','#6d424c',self.amount)
-        self.create_polygon(r,2,w-r,2,w-2,2,w-2,r,w-2,h-r,w-2,h-2,w-r,h-2,r,h-2,2,h-2,2,h-r,2,r,2,2,smooth=True,fill=fill,outline=outline,width=1)
+        self.create_polygon(*rounded_points(2,2,w-4,h-4,10),fill=fill,outline=outline,width=1)
+        self.create_line(16,4,w-16,4,fill=mix_color(fill,'#ffffff',.12),width=1)
         self.create_text(w/2,h/2+(1 if self.pressed else 0),text=self.text,fill=WHITE,font=(FONT,10,'bold'))
 
 
 class App:
     def __init__(self, root):
         self.root=root;root.reduce_motion=get_setting('reduce_motion')=='1';self._page_animation=None;self._scroll_animation=None; self.tab='pro'; self.rows=[]; self.nav={}; self.detail_active=False; self.back_action=None
-        root.title('SETTINGSCS2 Desktop'); root.geometry('1280x840'); root.minsize(1080,720); root.configure(bg=BG)
+        root.title('PerfSettings'); root.geometry('1280x840'); root.minsize(1080,720); root.configure(bg=BG)
         self.game=tk.StringVar(value=get_setting('game')); self.steam=tk.StringVar(value=get_setting('steam'))
         self.status=tk.StringVar(value='Local library  •  Your setup. Your edge.')
         self.chrome=WindowChrome(root)
         self.shell=box(root,bg=BG);self.shell.pack(fill='both',expand=True)
-        self.build_shell(); self.navigate('pro'); self.root.after(2000,self.poll)
+        self.selected_games=parse_games(get_setting('interests'))
+        self.build_shell()
+        if get_setting('intro_complete')=='1' and self.selected_games:self.navigate('pro' if 'cs2' in self.selected_games else 'fivem')
+        else:self.show_intro()
+        self.root.after(2000,self.poll)
         self.root.bind('<Alt-Left>',lambda event:self.back())
         self.root.bind('<Escape>',lambda event:self.back())
         self.set_icon()
@@ -163,28 +170,34 @@ class App:
         return body
     def guard(self, fn):
         try: return fn()
-        except Exception as exc: messagebox.showerror('SETTINGSCS2',str(exc),parent=self.root)
+        except Exception as exc: messagebox.showerror('PerfSettings',str(exc),parent=self.root)
     def btn(self,parent,text,fn,**kwargs):
         return Button(parent,text,lambda:self.guard(fn),**kwargs)
     def build_shell(self):
-        sidebar=box(self.shell,bg='#101113',width=220); sidebar.pack(side='left',fill='y'); sidebar.pack_propagate(False)
-        logo=box(sidebar,bg='#101113'); logo.pack(fill='x',padx=24,pady=(30,0))
-        label(logo,'⌖',30,RED,True).pack(side='left',padx=(0,7))
-        word=box(logo,bg='#101113'); word.pack(side='left')
-        label(word,'SETTINGS',15,bold=True).pack(anchor='w'); label(word,'CS2 / DESKTOP',10,RED,True).pack(anchor='w')
-        label(sidebar,'WORKSPACE',8,'#62656c',True).pack(anchor='w',padx=26,pady=(40,13))
+        sidebar=box(self.shell,bg=BG,width=220);sidebar.pack(side='left',fill='y');sidebar.pack_propagate(False)
+        logo=box(sidebar,bg=BG);logo.pack(fill='x',padx=20,pady=(26,18))
+        label(logo,'⌖  PerfSettings',17,bold=True).pack(anchor='w')
+        label(logo,'YOUR PERFORMANCE HUB',8,RED,True).pack(anchor='w',pady=(6,0))
+        group=self.panel(sidebar);group.pack(fill='x',padx=12,pady=(0,12))
+        label(group,'WORKSPACE',8,MUTED,True).pack(anchor='w',padx=16,pady=(16,8))
         for key,title in [('pro','⌖   Pro players'),('community','◈   Community'),('library','▦   My configs'),('settings','⚙   Settings')]:
-            holder=box(sidebar,bg='#101113');holder.pack(fill='x',padx=14,pady=4)
-            b=self.btn(holder,title,lambda k=key:self.navigate(k),width=192,height=46,quiet=True);b.pack();self.nav[key]=b
-        bottom=box(sidebar,bg='#101113');bottom.pack(side='bottom',fill='x',padx=20,pady=24)
-        self.btn(bottom,'Open website  ↗',lambda:webbrowser.open(SITE),width=180,quiet=True).pack()
-        tk.Frame(bottom,bg=LINE,height=1).pack(fill='x',pady=20)
-        label(bottom,'●  COUNTER-STRIKE 2',9,GREEN,True).pack(anchor='w')
-        label(bottom,'Desktop v'+VERSION+'  /  Local',9,MUTED).pack(anchor='w',pady=(6,0))
+            holder=box(group);holder.pack(fill='x',padx=9,pady=3)
+            button=self.btn(holder,title,lambda k=key:self.navigate(k),width=176,height=43,quiet=True)
+            button.pack(fill='x');self.nav[key]=button
+        tk.Frame(group,bg=LINE,height=1).pack(fill='x',padx=15,pady=(12,8))
+        self.btn(group,'Open website  ↗',lambda:webbrowser.open(SITE),width=176,height=38,quiet=True).pack(padx=9,pady=(0,12))
+        games=self.panel(sidebar);games.pack(fill='x',padx=12,pady=(0,12))
+        label(games,'YOUR GAMES',8,MUTED,True).pack(anchor='w',padx=16,pady=(15,5))
+        self.game_summary=label(games,'',10,bold=True);self.game_summary.pack(anchor='w',padx=16,pady=(0,7))
+        self.btn(games,'FiveM preview  →',lambda:self.navigate('fivem'),width=174,height=34,quiet=True).pack(padx=9,pady=(0,4))
+        self.btn(games,'Change games  →',self.show_intro,width=174,height=36,quiet=True).pack(padx=9,pady=(0,12))
+        self.update_game_label()
+        label(sidebar,'v'+VERSION+'   /   LOCAL WORKSPACE',8,MUTED).pack(anchor='w',padx=23,pady=(4,0))
         right=box(self.shell,bg=BG);right.pack(side='left',fill='both',expand=True)
         top=box(right,bg=BG,height=76);top.pack(fill='x');top.pack_propagate(False)
         self.crumb=label(top,'',10,MUTED);self.crumb.pack(side='left',padx=32)
-        self.btn(top,'↑  Import config',self.import_file,primary=True,width=164).pack(side='right',padx=30,pady=16)
+        self.import_button=self.btn(top,'↑  Import config',self.import_file,primary=True,width=164)
+        self.import_button.pack(side='right',padx=30,pady=16)
         tk.Frame(right,bg=LINE,height=1).pack(fill='x')
         bottom=box(right,bg='#101113');bottom.pack(side='bottom',fill='x')
         tk.Label(bottom,textvariable=self.status,bg='#101113',fg=MUTED,font=(FONT,9),anchor='w',wraplength=850,justify='left').pack(fill='x',padx=30,pady=11)
@@ -196,13 +209,30 @@ class App:
         self.canvas.bind('<Configure>',lambda e:self.canvas.itemconfigure(self.window,width=e.width))
         self.content.bind('<Configure>',lambda e:self.canvas.configure(scrollregion=self.canvas.bbox('all')))
         self.root.bind_all('<MouseWheel>',self.wheel)
+    def update_game_label(self):
+        names={'cs2':'CS2','fivem':'FiveM · soon'}
+        self.game_summary.configure(text=' / '.join(names[g] for g in self.selected_games) or 'Choose your games')
+    def show_intro(self):
+        from onboarding import show_intro
+        self.import_button.pack_forget()
+        show_intro(self,label,box,get_setting,put_setting)
+    def page_fivem(self):
+        self.title('FIVEM / COMING SOON','Your next workspace.','FiveM presets, game folders and installation support are not available yet.')
+        panel=self.panel();panel.pack(fill='x')
+        label(panel,'FiveM is on the roadmap.',22,bold=True).pack(anchor='w',padx=24,pady=(28,12))
+        label(panel,'Choose CS2 to explore the available pro settings and config tools.',11,MUTED,wraplength=650).pack(anchor='w',padx=24,pady=(0,18))
+        self.btn(panel,'Change games  →',self.show_intro,primary=True,width=200).pack(anchor='w',padx=24,pady=(0,28))
     def wheel(self,e):
         if e.widget.winfo_toplevel()==self.root and not isinstance(e.widget,tk.Text):
             self.canvas.yview_scroll(-int(e.delta/120),'units')
     def navigate(self,tab):
+        if get_setting('intro_complete')!='1':self.show_intro();return
+        if tab in ('pro','community','library') and 'cs2' not in self.selected_games:tab='fivem'
+        if tab=='fivem':self.import_button.pack_forget()
+        elif not self.import_button.winfo_manager():self.import_button.pack(side='right',padx=30,pady=16)
         self.tab=tab;self.detail_active=False;self.back_action=None
         for key,b in self.nav.items():b.primary=key==tab;b.draw()
-        self.crumb.configure(text='WORKSPACE   /   '+{'pro':'PRO PLAYERS','community':'COMMUNITY','library':'MY CONFIGS','settings':'SETTINGS'}[tab])
+        self.crumb.configure(text='WORKSPACE   /   '+{'pro':'PRO PLAYERS','community':'COMMUNITY','library':'MY CONFIGS','settings':'SETTINGS','fivem':'FIVEM'}[tab])
         self.clear_page()
         self.rows=DB.execute('SELECT id,name,content FROM configs ORDER BY rowid DESC').fetchall()
         getattr(self,'page_'+tab)()
@@ -237,7 +267,7 @@ class App:
         label(self.page,title,28,bold=True).pack(anchor='w',pady=(10,8))
         label(self.page,subtitle,10,MUTED,wraplength=780,justify='left').pack(anchor='w',pady=(0,25))
     def panel(self,parent=None):
-        return box(parent or self.page,highlightthickness=1,highlightbackground=LINE)
+        return GlassPanel(parent or self.page)
     def note(self,parent,text):
         f=box(parent,bg='#241b1d');f.pack(fill='x',pady=(15,20))
         label(f,text,10,'#d2a9ab',wraplength=760,justify='left').pack(anchor='w',padx=16,pady=14)
@@ -460,6 +490,7 @@ class App:
         if not file.is_file() or file.suffix.lower()!='.cfg' or file.stat().st_size>262144:raise ValueError('Choose a .cfg file up to 256 KB.')
         return validate_cfg(file.read_text(encoding='utf-8-sig'))
     def import_file(self):
+        if 'cs2' not in self.selected_games:self.show_intro();return
         path=filedialog.askopenfilename(filetypes=[('Config CS2','*.cfg')],parent=self.root)
         if path:add_config(Path(path).stem,self.read_file(path));self.navigate('library');self.status.set('✓  Config imported. Open it to review and apply.')
     def export(self,row):
