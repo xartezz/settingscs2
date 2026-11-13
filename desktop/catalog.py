@@ -6,8 +6,14 @@ PLAYERS = [
 ]
 
 def preset(player):
-    return (f'// SETTINGSCS2 — {player["name"]}: preset partial, nu config original\n'
-            f'// Sursa: https://prosettings.net/players/{"m0nesy" if player["id"]=="monesy" else player["id"]}/\n'
-            f'// Snapshot 2026-11-12. DPI {player["dpi"]} si rezolutia se seteaza manual.\n'
+    return (f'// SETTINGSCS2 — {player["name"]}: partial preset, not the original config\n'
+            f'// Source: https://prosettings.net/players/{"m0nesy" if player["id"]=="monesy" else player["id"]}/\n'
+            f'// Snapshot 2026-11-12. DPI {player["dpi"]} and resolution must be set manually.\n'
             f'sensitivity "{player["sens"]}"\nzoom_sensitivity_ratio "1"\n'
             'viewmodel_fov "68"\nviewmodel_offset_x "2.5"\nviewmodel_offset_y "0"\nviewmodel_offset_z "-1.5"\n')
+
+
+PROFILE_DETAILS = [{'country': 'Russia', 'windows': 4, 'brightness': '87%', 'msaa': '8×', 'reflex': 'Disabled', 'crosshair': {'length': 2, 'thickness': 2, 'gap': 1, 'outline': False, 'color': '#ffff00'}}, {'country': 'Russia', 'windows': 6, 'brightness': '93%', 'msaa': '8×', 'reflex': 'Disabled', 'crosshair': {'length': 2, 'thickness': 1, 'gap': 3, 'outline': True, 'color': '#ff0000'}}, {'country': 'France', 'windows': 6, 'brightness': '93%', 'msaa': '4×', 'reflex': 'Enabled', 'crosshair': {'length': 2, 'thickness': 2, 'gap': 2, 'outline': False, 'color': '#00ffdf'}}]
+for player, details in zip(PLAYERS, PROFILE_DETAILS):
+    player.update(details)
+    player["source"] = "https://prosettings.net/players/" + ("m0nesy" if player["id"] == "monesy" else player["id"]) + "/"

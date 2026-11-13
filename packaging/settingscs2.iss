@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.5.1"
+  #define AppVersion "0.6.0"
 #endif
 [Setup]
 AppId={{F1A6C765-6D47-485D-98CF-48F264C8B14F}
@@ -32,4 +32,5 @@ Root: HKCU; Subkey: "Software\Classes\settingscs2\shell\open\command"; ValueType
 [Run]
 Filename: "{app}\SettingsCS2.exe"; Flags: nowait runasoriginaluser
 ; Personal library is outside {app}; uninstall/update never deletes it.
+
 

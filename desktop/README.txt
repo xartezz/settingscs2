@@ -1,56 +1,42 @@
-SETTINGSCS2 DESKTOP v0.5 — ALPHA
-Windows 10/11, Python 3.10+ cu Tkinter. START.bat incearca py, apoi python.
-Daca niciuna dintre comenzi nu este disponibila, instaleaza Python de la
-https://www.python.org/downloads/windows/ si activeaza Add Python to PATH
-daca optiunea este disponibila. Include componenta Tcl/Tk si IDLE.
-Inchide fereastra de eroare si redeschide START.bat dupa instalare.
+SETTINGSCS2 DESKTOP v0.6.0
 
-1. Dezarhiveaza intr-un folder permanent.
-2. Ruleaza START.bat. Prima pornire inregistreaza settingscs2:// in HKCU pentru utilizatorul curent; nu necesita admin.
-3. Alege folderul Counter-Strike Global Offensive (contine game/bin/win64/cs2.exe) si Steam.exe.
-4. Importa un .cfg sau foloseste Add to app pe site, apoi Deschide in aplicatie.
-5. Verifica textul config-ului. Inchide CS2. Apasa Aplica sau Aplica si porneste CS2.
+INSTALL
+Download SettingsCS2-Setup.exe from the repository's latest GitHub Release.
+The installer includes Python; no separate Python installation is required.
+For the source edition only, install Python 3.10+ with Tcl/Tk, then run START.bat.
 
-Biblioteca persista in %LOCALAPPDATA%\SettingsCS2\library.sqlite3.
-Fiecare preset primeste un UUID si un fisier settingscs2_<uuid>.cfg.
-La suprascriere, versiunea precedenta este salvata ca .bak in acelasi folder.
-Nu se modifica autoexec.cfg, config-urile personale sau launch options persistente din Steam.
-Steam este pornit cu argumentele -applaunch 730 +exec settingscs2_<uuid>.cfg, fara shell.
-Daca jocul este deja pornit, argumentele de lansare pot sa nu fie aplicate.
-Backup-ul acopera doar fisierul dedicat, nu toate setarile schimbate de executia in joc.
-DPI, rezolutia si driverele se configureaza manual. Importa numai config-uri pe care le-ai verificat.
-Add to app transfera direct continutul config-ului; nu exista sincronizare cloud.
-Pentru config-uri mari foloseste descarcarea .cfg si importul manual.
+FIRST LAUNCH
+1. Open Settings and choose the Counter-Strike Global Offensive folder
+   containing game/bin/win64/cs2.exe, then select Steam.exe.
+2. Click Verify & save.
+3. Choose a pro preset or import a .cfg file. Review its contents.
+4. Close CS2, then use Apply config or Apply & launch CS2.
+5. To update, open Settings > Check for updates > Install & restart.
 
-Dezinstalare: sterge cheia HKCU\Software\Classes\settingscs2 folosind regedit,
-apoi folderul aplicatiei. Datele locale si config-urile instalate se pot sterge separat.
+INTERFACE
+English interface, animated buttons, section icons and detailed inline profiles.
+Profiles include Mouse, Crosshair, Viewmodel, Video, Peripherals and Config.
+Crosshair zoom and background controls affect the illustration only.
+Use Back, Alt+Left or Escape to return. Save editor changes before leaving.
+Reduce motion in Settings disables button and page animations.
+Custom title bar supports dragging, minimize, maximize, restore and resizing.
+The Windows taskbar registration and stable application identity are retained.
 
-Verificare: operatiile de validare, scriere, backup si argumentele de lansare au teste automate.
-Integrarea Windows, protocolul, Steam si executia efectiva in CS2 nu au fost testate pe un PC Windows in aceasta sesiune.
+DATA AND LIMITATIONS
+Local data persists in %LOCALAPPDATA%\SettingsCS2\library.sqlite3.
+Each config has a dedicated settingscs2_<uuid>.cfg file. Replacing that file
+creates a .bak backup. autoexec.cfg and persistent Steam launch options are
+not changed. This backup does not revert every setting changed in-game.
+Steam launches with -applaunch 730 +exec settingscs2_<uuid>.cfg.
+DPI, video and drivers require manual setup. Review imported commands.
+Pro data is an offline November 12, 2026 snapshot, not live settings.
+Presets include sensitivity and viewmodel only; they are not original pro files.
+Undocumented equipment is marked as such.
+Community and profiles are local. App and browser storage remain separate.
+Add to app transfers config contents directly; there is no cloud sync.
+Large configs can be downloaded and imported manually.
 
-INTERFATA v0.2
-- Jucatori pro: catalog offline cu cautare, detalii, sursa si adaugare in biblioteca.
-- Community: setup-uri locale cu nickname, mouse, tastatura, descriere si .cfg.
-- Config-urile mele: cautare, previzualizare, editare, export, stergere si aplicare.
-- Setari: configurarea si verificarea folderului CS2 si Steam.exe.
-Biblioteca existenta este pastrata. Descarca arhiva, dezarhiveaza intr-un folder
-permanent si ruleaza START.bat. Deschide Setari si apasa Verifica si salveaza.
-Nu sunt necesare pachete pip suplimentare. Python 3.10+ cu Tkinter ramane necesar.
-Catalogul pro este un snapshot din 12.11.2026, nu se actualizeaza automat.
-Community din aplicatie si Community din browser sunt stocari locale separate.
-
-NAVIGARE v0.3
-Detaliile jucatorilor, config-urile, editorul si formularul Community sunt
-pagini in fereastra principala. Butonul Inapoi, Alt+Stanga sau Escape revin
-la pagina precedenta. Salveaza editarile inainte de a parasi editorul.
-Bara de titlu v0.4 este desenata de aplicatie, independent de tema Windows.
-Butoane: minimizare, maximizare/restaurare, inchidere. Trage de bara pentru
-a muta fereastra; dublu click pentru maximizare. Marginile permit redimensionare.
-Maximizarea respecta zona de lucru a monitorului. Alt+F4 inchide aplicatia.
-Selectarea fisierelor si confirmarile folosesc in continuare dialoguri Windows.
-Controalele ferestrei necesita verificare interactiva pe Windows.
-
-ACTUALIZARI v0.5
-In Setari, configureaza repository-ul public de incredere ca utilizator/repository.
-Verificarea ruleaza la pornire; instalarea cere confirmare. GitHub Actions creeaza
-installerul Windows. Vezi README.md din pachetul complet pentru pasii de configurare.
+VALIDATION
+Automated checks cover config validation, backups, launch arguments, update
+integrity and window behavior. Actual Windows integration and CS2 execution
+must be checked on a Windows PC.

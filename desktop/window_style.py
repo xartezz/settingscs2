@@ -83,9 +83,9 @@ class WindowChrome:
         version=tk.Label(text,text='DESKTOP  /  v'+VERSION,bg='#141416',fg='#7f828b',font=('Segoe UI',8),anchor='w');version.pack(anchor='w')
         badge=tk.Label(self.bar,text='  CS2  ',bg='#302023',fg='#ef777c',font=('Segoe UI',8,'bold'),pady=4);badge.pack(side='left',padx=14)
         controls=tk.Frame(self.bar,bg='#141416');controls.pack(side='right',padx=12)
-        self.control(controls,'close',self.close,'Închide')
-        self.max_button=self.control(controls,'max',self.toggle_maximize,'Maximizează / restaurează')
-        self.control(controls,'min',self.minimize,'Minimizează')
+        self.control(controls,'close',self.close,'Close')
+        self.max_button=self.control(controls,'max',self.toggle_maximize,'Maximize / restore')
+        self.control(controls,'min',self.minimize,'Minimize')
         for widget in (self.bar,brand,text,icon,name,version,badge):
             widget.bind('<ButtonPress-1>',self.start_drag)
             widget.bind('<B1-Motion>',self.move)
@@ -195,4 +195,5 @@ class WindowChrome:
         if self.resize_start:
             x,y,b,edge=self.resize_start
             self.root.geometry(geometry(*resized(b,edge,event.x_root-x,event.y_root-y)))
+
 
