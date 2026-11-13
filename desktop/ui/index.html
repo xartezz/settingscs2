@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PerfSettings</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<header id="top">
+  <a class="logo" data-act="nav" data-tab="pro" href="#">⌖ Perf<b>Settings</b></a>
+  <nav id="nav" aria-label="Main">
+    <button data-act="nav" data-tab="pro">Pro players</button>
+    <button data-act="nav" data-tab="community">Community</button>
+    <button data-act="nav" data-tab="library">My configs <span id="count" class="badge">0</span></button>
+    <button data-act="nav" data-tab="settings">Settings</button>
+  </nav>
+  <div class="right">
+    <button class="chip" data-act="games" id="games" title="Change games"></button>
+    <button class="ghost small" data-act="site">Website ↗</button>
+  </div>
+</header>
+<main id="main" tabindex="-1"></main>
+<footer id="foot"><span id="status">Local library · Your setup. Your edge.</span><span id="ver"></span></footer>
+<div id="toasts" aria-live="polite"></div>
+<div id="modal" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

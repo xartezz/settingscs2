@@ -2,6 +2,13 @@
 
 A Windows companion and website for game settings, pro presets and a local config library. Dark red and black styling, compact horizontal navigation, glass-inspired surfaces and rounded animated controls.
 
+## v0.8.0
+
+- Desktop interface rebuilt in HTML/CSS/JS inside a native WebView2 window (pywebview). Same dark red look, cleaner layout, in-app confirmations and toasts instead of system dialogs.
+- Steam and CS2 are detected automatically (Steam registry and `libraryfolders.vdf`). Apply & launch also tries detection when paths are not set.
+- Python logic is split into testable modules (`api.py`, `store.py`, `detect.py`) with no GUI imports; the old Tkinter UI was removed.
+- Requires the Microsoft Edge WebView2 Runtime (included in Windows 11 and current Windows 10 updates).
+
 ## v0.7.1
 
 - PerfSettings branding across the desktop, website, installer and shortcuts.
@@ -16,7 +23,7 @@ A Windows companion and website for game settings, pro presets and a local confi
 ## Build and update
 
 1. Open **Actions → Build Windows installer → Run workflow**.
-2. Select `main` and enter a new version such as `v0.7.1`.
+2. Select `main` and enter a new version such as `v0.8.0`.
 3. Wait for the workflow to succeed. Download **PerfSettings-Setup.exe** from Releases.
 4. Existing users can use **Settings → Check for updates → Install & restart**.
 5. Launch PerfSettings, select your games, then choose the CS2 folder and Steam.exe in Settings.
@@ -41,8 +48,8 @@ Community profiles and config libraries are local, not public accounts or cloud 
 
 ## Development and verification
 
-Source edition: Python 3.10+ with Tkinter; run `desktop/START.bat` on Windows. No extra pip packages are required at runtime.
+Source edition: Python 3.10+; run `desktop/START.bat` on Windows (installs `pywebview` once). The installed app bundles everything. Preview the interface without Windows: `python desktop/tools/ui_preview.py` (needs Playwright).
 
 Run tests with `python -m unittest discover -s desktop -v`.
 
-Tests cover config validation and backups, updater integrity and compatibility, game selection persistence and window geometry/taskbar logic. GUI rendering, Windows installer upgrades, actual taskbar behavior and execution in CS2 still need validation on Windows. The installer is not digitally signed.
+Tests cover config validation and backups, apply/launch arguments, library and community logic, Steam/CS2 detection, updater integrity and game selection persistence. The interface is checked end-to-end in headless Chromium against the real Python API. The WebView2 window, PyInstaller bundle, Windows installer upgrades, taskbar behavior and execution in CS2 still need validation on Windows. The installer is not digitally signed.
