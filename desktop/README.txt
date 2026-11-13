@@ -1,4 +1,4 @@
-PerfSettings DESKTOP v0.7.0
+PerfSettings DESKTOP v0.7.1
 
 INSTALL
 Download PerfSettings-Setup.exe from the repository's latest GitHub Release.
@@ -48,3 +48,8 @@ Change games reopens the selection screen. CS2 configs remain saved when hidden.
 Glass-inspired panels use opaque shading for legibility, not native backdrop blur.
 Legacy data paths, executable identity and config filenames remain stable to
 preserve existing installations, taskbar pins and saved data.
+
+LAYOUT v0.7.1
+Navigation is horizontal. The centered game intro hides workspace navigation.
+A continuously animated backdrop displays red waves and drifting particles.
+Reduce motion freezes the backdrop. Hidden windows skip redraws.

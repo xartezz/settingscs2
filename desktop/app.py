@@ -15,6 +15,7 @@ from core import validate_cfg, decode_link, install_cfg, launch_args, game_cfg_d
 from catalog import PLAYERS, preset
 from preferences import parse_games
 from glass import GlassPanel, rounded_points
+from backdrop import AnimatedBackdrop
 from window_style import WindowChrome, set_app_identity
 from release_config import VERSION, REPOSITORY, SITE_URL
 import updater
@@ -157,7 +158,7 @@ class App:
         self.canvas.coords(self.window,0,0)
         for child in self.content.winfo_children():child.destroy()
         self.canvas.yview_moveto(0)
-        self.page=box(self.content,bg=BG);self.page.pack(fill='both',expand=True,padx=30,pady=28)
+        self.page=box(self.content,bg=BG);self.page.pack(fill='both',expand=True,padx=24,pady=18)
     def detail_page(self,title,back):
         self.detail_active=True; self.back_action=back
         self.clear_page()
@@ -174,34 +175,30 @@ class App:
     def btn(self,parent,text,fn,**kwargs):
         return Button(parent,text,lambda:self.guard(fn),**kwargs)
     def build_shell(self):
-        sidebar=box(self.shell,bg=BG,width=220);sidebar.pack(side='left',fill='y');sidebar.pack_propagate(False)
-        logo=box(sidebar,bg=BG);logo.pack(fill='x',padx=20,pady=(26,18))
-        label(logo,'⌖  PerfSettings',17,bold=True).pack(anchor='w')
-        label(logo,'YOUR PERFORMANCE HUB',8,RED,True).pack(anchor='w',pady=(6,0))
-        group=self.panel(sidebar);group.pack(fill='x',padx=12,pady=(0,12))
-        label(group,'WORKSPACE',8,MUTED,True).pack(anchor='w',padx=16,pady=(16,8))
-        for key,title in [('pro','⌖   Pro players'),('community','◈   Community'),('library','▦   My configs'),('settings','⚙   Settings')]:
-            holder=box(group);holder.pack(fill='x',padx=9,pady=3)
-            button=self.btn(holder,title,lambda k=key:self.navigate(k),width=176,height=43,quiet=True)
-            button.pack(fill='x');self.nav[key]=button
-        tk.Frame(group,bg=LINE,height=1).pack(fill='x',padx=15,pady=(12,8))
-        self.btn(group,'Open website  ↗',lambda:webbrowser.open(SITE),width=176,height=38,quiet=True).pack(padx=9,pady=(0,12))
-        games=self.panel(sidebar);games.pack(fill='x',padx=12,pady=(0,12))
-        label(games,'YOUR GAMES',8,MUTED,True).pack(anchor='w',padx=16,pady=(15,5))
-        self.game_summary=label(games,'',10,bold=True);self.game_summary.pack(anchor='w',padx=16,pady=(0,7))
-        self.btn(games,'FiveM preview  →',lambda:self.navigate('fivem'),width=174,height=34,quiet=True).pack(padx=9,pady=(0,4))
-        self.btn(games,'Change games  →',self.show_intro,width=174,height=36,quiet=True).pack(padx=9,pady=(0,12))
+        # Horizontal navigation frees the entire former sidebar column.
+        self.navigation=box(self.shell,bg=PANEL);self.navigation.pack(fill='x')
+        bar=box(self.navigation);bar.pack(fill='x',padx=22,pady=(10,4))
+        label(bar,'⌖  PerfSettings',17,bold=True).pack(side='left',padx=(0,22))
+        for key,title in [('pro','⌖  Pro players'),('community','◈  Community'),('library','▦  My configs'),('settings','⚙  Settings')]:
+            button=self.btn(bar,title,lambda k=key:self.navigate(k),width=132,height=40,quiet=True)
+            button.pack(side='left',padx=4);self.nav[key]=button
+        self.btn(bar,'Website  ↗',lambda:webbrowser.open(SITE),width=116,height=38,quiet=True).pack(side='right')
+        games=box(self.navigation);games.pack(fill='x',padx=26,pady=(0,8))
+        self.game_summary=label(games,'',9,MUTED,True);self.game_summary.pack(side='left',padx=(0,14))
+        self.btn(games,'Change games',self.show_intro,width=132,height=30,quiet=True).pack(side='left',padx=5)
+        self.btn(games,'FiveM · soon',lambda:self.navigate('fivem'),width=124,height=30,quiet=True).pack(side='left',padx=5)
+        label(games,'v'+VERSION,9,MUTED).pack(side='right')
         self.update_game_label()
-        label(sidebar,'v'+VERSION+'   /   LOCAL WORKSPACE',8,MUTED).pack(anchor='w',padx=23,pady=(4,0))
-        right=box(self.shell,bg=BG);right.pack(side='left',fill='both',expand=True)
-        top=box(right,bg=BG,height=76);top.pack(fill='x');top.pack_propagate(False)
+        self.right=right=box(self.shell,bg=BG);right.pack(fill='both',expand=True)
+        self.top=top=box(right,bg=BG,height=46);top.pack(fill='x');top.pack_propagate(False)
         self.crumb=label(top,'',10,MUTED);self.crumb.pack(side='left',padx=32)
-        self.import_button=self.btn(top,'↑  Import config',self.import_file,primary=True,width=164)
-        self.import_button.pack(side='right',padx=30,pady=16)
-        tk.Frame(right,bg=LINE,height=1).pack(fill='x')
-        bottom=box(right,bg='#101113');bottom.pack(side='bottom',fill='x')
-        tk.Label(bottom,textvariable=self.status,bg='#101113',fg=MUTED,font=(FONT,9),anchor='w',wraplength=850,justify='left').pack(fill='x',padx=30,pady=11)
-        area=box(right,bg=BG);area.pack(fill='both',expand=True)
+        self.import_button=self.btn(top,'↑  Import config',self.import_file,primary=True,width=164,height=34)
+        self.import_button.pack(side='right',padx=24,pady=6)
+        self.top_line=tk.Frame(right,bg=LINE,height=1);self.top_line.pack(fill='x')
+        self.footer=bottom=box(right,bg='#101113');bottom.pack(side='bottom',fill='x')
+        tk.Label(bottom,textvariable=self.status,bg='#101113',fg=MUTED,font=(FONT,9),anchor='w',wraplength=850,justify='left').pack(fill='x',padx=24,pady=7)
+        self.backdrop=AnimatedBackdrop(right,self.root);self.backdrop.pack(fill='both',expand=True)
+        area=self.backdrop.host
         self.canvas=tk.Canvas(area,bg=BG,highlightthickness=0)
         scrollbar=tk.Scrollbar(area,orient='vertical',command=self.canvas.yview,bg=PANEL,troughcolor=BG,activebackground=RED,width=9)
         scrollbar.pack(side='right',fill='y');self.canvas.pack(side='left',fill='both',expand=True);self.canvas.configure(yscrollcommand=scrollbar.set)
@@ -212,8 +209,17 @@ class App:
     def update_game_label(self):
         names={'cs2':'CS2','fivem':'FiveM · soon'}
         self.game_summary.configure(text=' / '.join(names[g] for g in self.selected_games) or 'Choose your games')
+    def set_workspace_visible(self,visible):
+        if visible:
+            if not self.navigation.winfo_manager():self.navigation.pack(fill='x',before=self.right)
+            if not self.top.winfo_manager():self.top.pack(fill='x',before=self.backdrop)
+            if not self.top_line.winfo_manager():self.top_line.pack(fill='x',before=self.backdrop)
+            if not self.footer.winfo_manager():self.footer.pack(side='bottom',fill='x',before=self.backdrop)
+        else:
+            for widget in (self.navigation,self.top,self.top_line,self.footer):widget.pack_forget()
     def show_intro(self):
         from onboarding import show_intro
+        self.set_workspace_visible(False)
         self.import_button.pack_forget()
         show_intro(self,label,box,get_setting,put_setting)
     def page_fivem(self):
@@ -227,9 +233,10 @@ class App:
             self.canvas.yview_scroll(-int(e.delta/120),'units')
     def navigate(self,tab):
         if get_setting('intro_complete')!='1':self.show_intro();return
+        self.set_workspace_visible(True)
         if tab in ('pro','community','library') and 'cs2' not in self.selected_games:tab='fivem'
         if tab=='fivem':self.import_button.pack_forget()
-        elif not self.import_button.winfo_manager():self.import_button.pack(side='right',padx=30,pady=16)
+        elif not self.import_button.winfo_manager():self.import_button.pack(side='right',padx=24,pady=6)
         self.tab=tab;self.detail_active=False;self.back_action=None
         for key,b in self.nav.items():b.primary=key==tab;b.draw()
         self.crumb.configure(text='WORKSPACE   /   '+{'pro':'PRO PLAYERS','community':'COMMUNITY','library':'MY CONFIGS','settings':'SETTINGS','fivem':'FIVEM'}[tab])
@@ -262,6 +269,7 @@ class App:
         self.status.set('Copied to clipboard.')
     def set_motion(self,variable):
         self.root.reduce_motion=variable.get();put_setting('reduce_motion','1' if variable.get() else '0')
+        self.backdrop.layout()
     def title(self,kicker,title,subtitle):
         label(self.page,kicker,9,RED,True).pack(anchor='w')
         label(self.page,title,28,bold=True).pack(anchor='w',pady=(10,8))

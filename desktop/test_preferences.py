@@ -7,6 +7,7 @@ from onboarding import show_intro
 class Widget:
     def __init__(self,*args,**kwargs):self.text=kwargs.get('text','');self.primary=kwargs.get('primary',False)
     def pack(self,*args,**kwargs):pass
+    def pack_configure(self,**kwargs):pass
     def cget(self,key):return '#181a20'
     def create_oval(self,*args,**kwargs):pass
     def create_text(self,*args,**kwargs):pass

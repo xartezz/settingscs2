@@ -1,21 +1,22 @@
 # PerfSettings
 
-A Windows companion and website for game settings, pro presets and a local config library. Dark red and black styling, compact navigation, glass-inspired surfaces and rounded animated controls.
+A Windows companion and website for game settings, pro presets and a local config library. Dark red and black styling, compact horizontal navigation, glass-inspired surfaces and rounded animated controls.
 
-## v0.7.0
+## v0.7.1
 
 - PerfSettings branding across the desktop, website, installer and shortcuts.
 - First-run intro: select CS2, FiveM or both. Change preferences from **Change games**.
 - CS2 supports pro profiles, partial presets, config import, backup and Steam launch with `+exec`.
 - FiveM is **Coming soon**. Selecting it saves an interest and displays a placeholder; it does not install configs or launch FiveM.
-- Compact sidebar: navigation and website controls stay together, followed by the game picker.
+- Horizontal navigation replaces the tall, empty sidebar. The intro hides navigation, workspace controls and the status footer until selection is complete.
+- Persistent animated red waves and drifting particles surround the content; reduced-motion mode shows a static background. Animation jobs are cancelled when the canvas is destroyed.
 - Button hover, focus and page animations, with **Reduce motion** in Settings.
 - Desktop glass styling is an opaque visual treatment; the website uses backdrop blur where supported.
 
 ## Build and update
 
 1. Open **Actions → Build Windows installer → Run workflow**.
-2. Select `main` and enter a new version such as `v0.7.0`.
+2. Select `main` and enter a new version such as `v0.7.1`.
 3. Wait for the workflow to succeed. Download **PerfSettings-Setup.exe** from Releases.
 4. Existing users can use **Settings → Check for updates → Install & restart**.
 5. Launch PerfSettings, select your games, then choose the CS2 folder and Steam.exe in Settings.
