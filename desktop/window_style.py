@@ -6,6 +6,55 @@ from ctypes import wintypes
 from release_config import VERSION
 
 
+APP_USER_MODEL_ID = 'SettingsCS2.Desktop'
+
+
+def set_app_identity():
+    """Match installed shortcuts; call before creating any Tk windows."""
+    if sys.platform != 'win32':
+        return False
+    try:
+        shell = ctypes.WinDLL('shell32', use_last_error=True)
+        setter = shell.SetCurrentProcessExplicitAppUserModelID
+        setter.argtypes = [wintypes.LPCWSTR]
+        setter.restype = ctypes.c_long
+        return setter(APP_USER_MODEL_ID) == 0
+    except (OSError, AttributeError):
+        return False
+
+
+def repair_taskbar_window(api, hwnd, already_registered=False):
+    """Register the real wrapper HWND with Explorer after Tk has mapped it."""
+    if not hwnd:
+        return False
+    get = api.GetWindowLongPtrW if ctypes.sizeof(ctypes.c_void_p) == 8 else api.GetWindowLongW
+    set_ = api.SetWindowLongPtrW if ctypes.sizeof(ctypes.c_void_p) == 8 else api.SetWindowLongW
+    get.argtypes = [wintypes.HWND, ctypes.c_int]; get.restype = ctypes.c_ssize_t
+    set_.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t]; set_.restype = ctypes.c_ssize_t
+    api.IsWindowVisible.argtypes = [wintypes.HWND]; api.IsWindowVisible.restype = wintypes.BOOL
+    api.IsIconic.argtypes = [wintypes.HWND]; api.IsIconic.restype = wintypes.BOOL
+    api.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT]
+    api.SetWindowPos.restype = wintypes.BOOL
+    # Do not restore a minimized app or map a window that Tk is still creating.
+    if not api.IsWindowVisible(hwnd) or api.IsIconic(hwnd):
+        return False
+    style = get(hwnd, -20)
+    desired = (style | 0x00040000) & ~(0x00000080 | 0x08000000)
+    owner = get(hwnd, -8)
+    if already_registered and style == desired and not owner:
+        return True
+    # Explorer must see a fresh hide -> style change -> show transition.
+    api.ShowWindow(hwnd, 0)
+    try:
+        set_(hwnd, -20, desired)
+        if owner:
+            set_(hwnd, -8, 0)
+        api.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0037)
+    finally:
+        api.ShowWindow(hwnd, 8)  # SW_SHOWNA: never steal focus on restore.
+    return get(hwnd, -20) == desired and get(hwnd, -8) == 0
+
+
 def geometry(x, y, width, height):
     return f'{int(width)}x{int(height)}{int(x):+d}{int(y):+d}'
 
@@ -44,7 +93,9 @@ class WindowChrome:
             widget.bind('<Double-Button-1>',lambda e:self.toggle_maximize())
         tk.Frame(root,bg='#2b292d',height=1).pack(side='top',fill='x')
         root.bind('<Alt-F4>',lambda e:self.close())
-        root.after_idle(self.enable_taskbar)
+        self._taskbar_hwnd=None; self._taskbar_job=None; self._taskbar_repairing=False
+        root.bind('<Map>',self.on_map,add='+')
+        self.schedule_taskbar_repair()
         self.add_resize_edges()
     def control(self,parent,kind,command,description):
         c=tk.Canvas(parent,width=34,height=30,bg='#141416',highlightthickness=0,cursor='hand2',takefocus=1)
@@ -68,19 +119,24 @@ class WindowChrome:
         api.GetAncestor.argtypes=[wintypes.HWND,wintypes.UINT];api.GetAncestor.restype=wintypes.HWND
         api.ShowWindow.argtypes=[wintypes.HWND,ctypes.c_int];api.ShowWindow.restype=wintypes.BOOL
         return api,api.GetAncestor(self.root.winfo_id(),2)
+    def on_map(self,event):
+        if event.widget == self.root:
+            self.schedule_taskbar_repair()
+    def schedule_taskbar_repair(self):
+        if sys.platform=='win32' and self._taskbar_job is None and not self._taskbar_repairing:
+            self._taskbar_job=self.root.after(150,self.enable_taskbar)
     def enable_taskbar(self):
-        if sys.platform!='win32':return
+        self._taskbar_job=None
+        if sys.platform!='win32' or self._taskbar_repairing:return
+        self._taskbar_repairing=True
         try:
-            self.root.update_idletasks();api,hwnd=self.api()
-            get=api.GetWindowLongPtrW if ctypes.sizeof(ctypes.c_void_p)==8 else api.GetWindowLongW
-            set_=api.SetWindowLongPtrW if ctypes.sizeof(ctypes.c_void_p)==8 else api.SetWindowLongW
-            get.argtypes=[wintypes.HWND,ctypes.c_int];get.restype=ctypes.c_ssize_t
-            set_.argtypes=[wintypes.HWND,ctypes.c_int,ctypes.c_ssize_t];set_.restype=ctypes.c_ssize_t
-            # Keep app in taskbar/Alt-Tab even though Tk uses an undecorated window.
-            set_(hwnd,-20,(get(hwnd,-20)|0x00040000)&~0x00000080)
-            api.SetWindowPos.argtypes=[wintypes.HWND,wintypes.HWND,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int,wintypes.UINT]
-            api.SetWindowPos(hwnd,None,0,0,0,0,0x0027)
-        except (OSError,AttributeError):pass
+            api,hwnd=self.api()
+            if repair_taskbar_window(api,hwnd,self._taskbar_hwnd==hwnd):
+                self._taskbar_hwnd=hwnd
+        except (OSError,AttributeError):
+            self._taskbar_hwnd=None
+        finally:
+            self._taskbar_repairing=False
     def close(self):self.root.destroy()
     def minimize(self):
         if sys.platform=='win32':
@@ -139,3 +195,4 @@ class WindowChrome:
         if self.resize_start:
             x,y,b,edge=self.resize_start
             self.root.geometry(geometry(*resized(b,edge,event.x_root-x,event.y_root-y)))
+

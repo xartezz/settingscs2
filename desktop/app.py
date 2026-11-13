@@ -13,7 +13,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from core import validate_cfg, decode_link, install_cfg, launch_args, game_cfg_dir
 from catalog import PLAYERS, preset
-from window_style import WindowChrome
+from window_style import WindowChrome, set_app_identity
 from release_config import VERSION, REPOSITORY, SITE_URL
 import updater
 
@@ -447,6 +447,7 @@ class App:
 
 
 def main():
+    set_app_identity()
     root=tk.Tk()
     if sys.platform!='win32':
         root.withdraw();messagebox.showerror('Windows necesar','Această versiune este pentru Windows.');root.destroy();return
@@ -460,3 +461,4 @@ def main():
     root.mainloop()
 
 if __name__=='__main__':main()
+
